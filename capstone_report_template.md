@@ -134,6 +134,47 @@ There is no description on the original dataset about the feature ranging from
 
 'PdId':Unique Identifier for use in update and insert operations
 
+
+
+### Exploratory Visualization
+- Location
+Let's visualize the occurence of the crime by the location.
+
+```python
+rounding_factor = 4
+
+from matplotlib.colors import LogNorm
+x = np.round(crime_df['X'].head(10000),rounding_factor)
+y = np.round(crime_df['Y'].head(10000),rounding_factor)
+fig = plt.figure()
+plt.suptitle('Reported Crime Heatmap')
+plt.xlabel('Latitude')
+plt.ylabel('Longitude')
+H, xedges, yedges, img = plt.hist2d(x, y, norm=LogNorm())
+extent = [yedges[0], yedges[-1], xedges[0], xedges[-1]]
+
+plt.show()
+```
+
+![](C:\Users\keadachi\Downloads\locationheatmap.png)
+
+- Occurence by Year
+```python
+crime_df['Year'] = [int(dte.split("/")[2]) for dte in crime_df['Date']]
+sns.countplot(x='Year',data=crime_df)
+```
+
+![](C:\Users\keadachi\Downloads\incidentsperyear.png)
+
+
+- Occurence by dayofweek
+```python
+sns.countplot(x='DayOfWeek',data=crime_df)
+plt.title('Number of cases by dayofweek')
+```
+![](C:\Users\keadachi\Downloads\perdayofweek.png)
+
+- Category
 Category fields have following instances.
 There looks skew in specific classes so this is not closely balanced.
 
@@ -194,43 +235,26 @@ PORNOGRAPHY/OBSCENE MAT            59
 TREA                               14
 ```
 
-
-### Exploratory Visualization
-- Location
-Let's visualize the occurence of the crime by the location.
-
-```python
-rounding_factor = 4
-
-# Create heatmap
-from matplotlib.colors import LogNorm
-x = np.round(crime_df['X'].head(10000),rounding_factor)
-y = np.round(crime_df['Y'].head(10000),rounding_factor)
-fig = plt.figure()
-plt.suptitle('Reported Crime Heatmap')
-plt.xlabel('Latitude')
-plt.ylabel('Longitude')
-H, xedges, yedges, img = plt.hist2d(x, y, norm=LogNorm())
-extent = [yedges[0], yedges[-1], xedges[0], xedges[-1]]
-
-plt.show()
-```
-
-![](C:\Users\keadachi\Downloads\locationheatmap.png)
-
-
-In this section, you will need to provide some form of visualization that summarizes or extracts a relevant characteristic or feature about the data. The visualization should adequately support the data being used. Discuss why this visualization was chosen and how it is relevant. Questions to ask yourself when writing this section:
-- _Have you visualized a relevant characteristic or feature about the dataset or input data?_
-- _Is the visualization thoroughly analyzed and discussed?_
-- _If a plot is provided, are the axes, title, and datum clearly defined?_
-
 ### Algorithms and Techniques
+
+I want to build prediction model leveraging machine learning techniques.
+
+In this case, I want to apply surpervised learning becuase the labeled data is available.
+
+Based on sklearn algorithm cheat-sheet, I'm going to use classification methods to build the model.
+
+https://scikit-learn.org/stable/tutorial/machine_learning_map/
+
+I'm going to use ensemble model leveraging XGBoost or LightGBM.
+
 In this section, you will need to discuss the algorithms and techniques you intend to use for solving the problem. You should justify the use of each one based on the characteristics of the problem and the problem domain. Questions to ask yourself when writing this section:
 - _Are the algorithms you will use, including any default variables/parameters in the project clearly defined?_
 - _Are the techniques to be used thoroughly discussed and justified?_
 - _Is it made clear how the input data or datasets will be handled by the algorithms and techniques chosen?_
 
 ### Benchmark
+I will use very simple model such as logistic regression as a benchmark model.
+
 In this section, you will need to provide a clearly defined benchmark result or threshold for comparing across performances obtained by your solution. The reasoning behind the benchmark (in the case where it is not an established result) should be discussed. Questions to ask yourself when writing this section:
 - _Has some result or value been provided that acts as a benchmark for measuring performance?_
 - _Is it clear how this result or value was obtained (whether by data or by hypothesis)?_
