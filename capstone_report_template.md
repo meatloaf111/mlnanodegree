@@ -156,7 +156,7 @@ extent = [yedges[0], yedges[-1], xedges[0], xedges[-1]]
 plt.show()
 ```
 
-![](C:\Users\keadachi\Downloads\locationheatmap.png)
+![](https://github.com/meatloaf111/mlnanodegree/blob/master/locationheatmap.png)
 
 - Occurence by Year
 ```python
@@ -164,7 +164,7 @@ crime_df['Year'] = [int(dte.split("/")[2]) for dte in crime_df['Date']]
 sns.countplot(x='Year',data=crime_df)
 ```
 
-![](C:\Users\keadachi\Downloads\incidentsperyear.png)
+![](https://github.com/meatloaf111/mlnanodegree/blob/master/incidentsperyear.png)
 
 
 - Occurence by dayofweek
@@ -172,7 +172,7 @@ sns.countplot(x='Year',data=crime_df)
 sns.countplot(x='DayOfWeek',data=crime_df)
 plt.title('Number of cases by dayofweek')
 ```
-![](C:\Users\keadachi\Downloads\perdayofweek.png)
+![](https://github.com/meatloaf111/mlnanodegree/blob/master/perdayofweek.png)
 
 - Category
 Category fields have following instances.
@@ -247,33 +247,127 @@ https://scikit-learn.org/stable/tutorial/machine_learning_map/
 
 I'm going to use ensemble model leveraging XGBoost or LightGBM.
 
-In this section, you will need to discuss the algorithms and techniques you intend to use for solving the problem. You should justify the use of each one based on the characteristics of the problem and the problem domain. Questions to ask yourself when writing this section:
-- _Are the algorithms you will use, including any default variables/parameters in the project clearly defined?_
-- _Are the techniques to be used thoroughly discussed and justified?_
-- _Is it made clear how the input data or datasets will be handled by the algorithms and techniques chosen?_
-
 ### Benchmark
 I will use very simple model such as logistic regression as a benchmark model.
-
-In this section, you will need to provide a clearly defined benchmark result or threshold for comparing across performances obtained by your solution. The reasoning behind the benchmark (in the case where it is not an established result) should be discussed. Questions to ask yourself when writing this section:
-- _Has some result or value been provided that acts as a benchmark for measuring performance?_
-- _Is it clear how this result or value was obtained (whether by data or by hypothesis)?_
-
 
 ## III. Methodology
 _(approx. 3-5 pages)_
 
 ### Data Preprocessing
-In this section, all of your preprocessing steps will need to be clearly documented, if any were necessary. From the previous section, any of the abnormalities or characteristics that you identified about the dataset will be addressed and corrected here. Questions to ask yourself when writing this section:
-- _If the algorithms chosen require preprocessing steps like feature selection or feature transformations, have they been properly documented?_
-- _Based on the **Data Exploration** section, if there were abnormalities or characteristics that needed to be addressed, have they been properly corrected?_
-- _If no preprocessing is needed, has it been made clear why?_
+- Year
+Since we do not have enough data on year 2018, I will ommit this year.
+Also , there are too many data from 2003 to 2017 and my machine does not enough power to learn all those datasets.
+My interest is on the scenary of the place of the crime.
+Landscape changes with the time passes due to redevelopment etc.
+So I will focus on the lates data and use the data from 2015 to 2017.
+
+```python
+crime_2015_2018 = crime_df[crime_df.Year > 2014]
+crime_2015_2017 = crime_2015_2018[crime_df.Year < 2018]
+crime_2015_2017.shape
+```
+
+```python
+(462182, 34)
+```
+
+- Location
+I try to scale the longitude and latitude by using standard scaler.
+
+```python
+xy_scaler = preprocessing.StandardScaler() 
+
+xy_scaler.fit(crime_df[["X","Y"]]) 
+
+crime_df[["X","Y"]]=xy_scaler.transform(crime_df[["X","Y"]]) 
+```
+
+- Category
+Data set has a text field of 'Category'.This is a non-numerical feature, so I'm going to encode this to numerical value using pandas get_dummies() or LabelEncoder.
+
+```python
+le_crime = preprocessing.LabelEncoder()
+crime = le_crime.fit_transform(crime_df.Category)
+crime_df['Category'] = crime
+```
+
+- DayOfWeek
+This feature too is a text field.I encode this as well.
+```python
+crime_df['DayOfWeek'] = le_crime.fit_transform(crime_df.DayOfWeek)
+```
 
 ### Implementation
-In this section, the process for which metrics, algorithms, and techniques that you implemented for the given data will need to be clearly documented. It should be abundantly clear how the implementation was carried out, and discussion should be made regarding any complications that occurred during this process. Questions to ask yourself when writing this section:
-- _Is it made clear how the algorithms and techniques were implemented with the given datasets or input data?_
-- _Were there any complications with the original metrics or techniques that required changing prior to acquiring a solution?_
-- _Was there any part of the coding process (e.g., writing complicated functions) that should be documented?_
+I build the initial model with 'DayOfWeek', 'Time', 'X', 'Y' as predicting features and 'Category' as label.
+
+I split the data into training and testing for cross_validation.
+
+```python
+training, testing = cross_validation.train_test_split(crime_2015_2017,test_size = 0.2, random_state=0)
+```
+
+```python
+#training = training[['Category', 'DayOfWeek', 'Date', 'Time', 'X', 'Y']]
+training = training[['Category', 'DayOfWeek',  'Time', 'X', 'Y']]
+# Rename X,Y to Longitude, Latitude
+training.columns = ['Category', 'DayOfWeek',  'Time', 'Longitude', 'Latitude']
+```
+
+```python
+label = training['Category'].astype('category')
+
+testlabel = testing['Category'].astype('category')
+
+del training['Category']
+
+del testing['Category']
+```
+
+Firstly build model by logistic regression for benchmarking.
+
+```python
+lr = LogisticRegression()
+lr.fit(training,label)
+```
+```python
+LogisticRegression(C=1.0, class_weight=None, dual=False, fit_intercept=True,
+          intercept_scaling=1, max_iter=100, multi_class='ovr', n_jobs=1,
+          penalty='l2', random_state=None, solver='liblinear', tol=0.0001,
+          verbose=0, warm_start=False)
+```
+
+```python
+lrpredicted = lr.predict_proba(testing)
+log_loss(testlabel,lrpredicted)
+```
+```python
+2.4747829464660747
+```
+Next , I build initial model with XGBClassifier.
+```python
+xgb_model = XGBClassifier()
+xgb_model.fit(training,label)
+```
+
+```python
+XGBClassifier(base_score=0.5, booster='gbtree', colsample_bylevel=1,
+       colsample_bynode=1, colsample_bytree=1, gamma=0, learning_rate=0.1,
+       max_delta_step=0, max_depth=3, min_child_weight=1, missing=None,
+       n_estimators=100, n_jobs=1, nthread=None,
+       objective='multi:softprob', random_state=0, reg_alpha=0,
+       reg_lambda=1, scale_pos_weight=1, seed=None, silent=None,
+       subsample=1, verbosity=1)
+```
+```python
+predicted = xgb_model.predict_proba(testing)
+```
+```python
+log_loss(testlabel,predicted)
+```
+```python
+2.3437577077398806
+```
+Log loss of XGB is only 5% better than benchmark.
 
 ### Refinement
 In this section, you will need to discuss the process of improvement you made upon the algorithms and techniques you used in your implementation. For example, adjusting parameters for certain models to acquire improved solutions would fall under the refinement category. Your initial and final solutions should be reported, as well as any significant intermediate results as necessary. Questions to ask yourself when writing this section:
