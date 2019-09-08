@@ -1,21 +1,59 @@
 # Machine Learning Engineer Nanodegree
 ## Capstone Project
-Joe Udacity  
-December 31st, 2050
+Ken Adachi  
+September xxst, 2019
 
 ## I. Definition
-_(approx. 1-2 pages)_
 
 ### Project Overview
-In this section, look to provide a high-level overview of the project in layman’s terms. Questions to ask yourself when writing this section:
-- _Has an overview of the project been provided, such as the problem domain, project origin, and related datasets or input data?_
-- _Has enough background information been given so that an uninformed reader would understand the problem domain and following problem statement?_
+In this project, I want to apply Machine Learning technique for the purpose of crime prevention.
+
+There are some academic papers or articles on this domain such as:
+
+Learning, Predicting and Planning against Crime:Demonstration Based on Real Urban Crime Data
+https://pdfs.semanticscholar.org/cacd/e031e470af4fe835bf50f14eb4c265e0f2a6.pdf
+
+USING MACHINE LEARNING ALGORITHMS TO ANALYZE CRIME DATA
+https://www.researchgate.net/publication/275220711_Using_Machine_Learning_Algorithms_to_Analyze_Crime_Data
+
+AI for Crime Prevention and Detection – 5 Current Applications
+https://emerj.com/ai-sector-overviews/ai-crime-prevention-5-current-applications/
+
+I want to take Crime Opportunity Theory as a basis for this project.This theory suggests that the occurence of a crime depens not only on the presense of the motivated offender but also on the conditions of the environment in which that offender is situated.
+
+Reference:
+Community Safety Maps for Children in Japan: An Analysis from a Situational Crime Prevention Perspective
+https://link.springer.com/article/10.1007/s11417-011-9113-z
+
+I except that I can find a pattern in where actual crime happened.
+So I want to analyze the histrocial crime incident data with the information on where it occured.
+
+This might lead to prevent crime to happen in my neighborhood and proctec children in my community.
 
 ### Problem Statement
-In this section, you will want to clearly define the problem that you are trying to solve, including the strategy (outline of tasks) you will use to achieve the desired solution. You should also thoroughly discuss what the intended solution will be for this problem. Questions to ask yourself when writing this section:
-- _Is the problem statement clearly defined? Will the reader understand what you are expecting to solve?_
-- _Have you thoroughly discussed how you will attempt to solve the problem?_
-- _Is an anticipated solution clearly defined? Will the reader understand what results you are looking for?_
+In order to avoid to be involved in encountering crime, I want to develop a solution to predict if the crime occur in the present location. There are several points to consider:
+
+- Location
+
+Crime Opportunity theory suggests that the "view" of the location is important for the ones who try to commit a crime to decide to do so.For example, if there is a street with many tall trees which makes it hard for everyone to be seen, there is a higher chance of the crime to be occured.
+
+So if I can specify the "location" as a street level granurality , then that would precise.
+Or if I can use street view image of the location leveraging map data such as google street view, then the result would be interesting.
+
+However, given limitted resources and time, I'm thinking of specifying location as neigborhood in a way such as "the crime actually happend in within a few miles radius from the current point".
+
+- Types of Crime
+
+I would not classify what types of crimes occured or will occure.
+The main purpose of this project is to identify the location that makes criminals to think the place is a good opportunity for them to commit a crime.
+So, I just want to focus on analyizing the crime occured in that place or not.
+
+- Timing of the crime
+
+It is expected that the crime might occur on specific timing.
+For example, crime targeted for the children will occur more when children got home from school.
+
+In sum, I want to make the solution to accept the location and time and then predict if the crime will occur or not.
 
 ### Metrics
 In this section, you will need to clearly define the metrics or calculations you will use to measure performance of a model or result in your project. These calculations and metrics should be justified based on the characteristics of the problem and problem domain. Questions to ask yourself when writing this section:
@@ -27,13 +65,160 @@ In this section, you will need to clearly define the metrics or calculations you
 _(approx. 2-4 pages)_
 
 ### Data Exploration
-In this section, you will be expected to analyze the data you are using for the problem. This data can either be in the form of a dataset (or datasets), input data (or input files), or even an environment. The type of data should be thoroughly described and, if possible, have basic statistics and information presented (such as discussion of input features or defining characteristics about the input or environment). Any abnormalities or interesting qualities about the data that may need to be addressed have been identified (such as features that need to be transformed or the possibility of outliers). Questions to ask yourself when writing this section:
-- _If a dataset is present for this problem, have you thoroughly discussed certain features about the dataset? Has a data sample been provided to the reader?_
-- _If a dataset is present for this problem, are statistics about the dataset calculated and reported? Have any relevant results from this calculation been discussed?_
-- _If a dataset is **not** present for this problem, has discussion been made about the input space or input data for your problem?_
-- _Are there any abnormalities or characteristics about the input space or dataset that need to be addressed? (categorical variables, missing values, outliers, etc.)_
+I'm going to use "Police Department Incident Reports: Historical 2003 to May 2018" data set provided by San Francisco City Government.
+
+https://data.sfgov.org/Public-Safety/Police-Department-Incident-Reports-Historical-2003/tmnf-yvry
+
+This dataset includes police incident reports filed by officers and by individuals through self-service online reporting for non-emergency cases through 2003 to 2018.The dataset has attributes such as when the incident reports filed (Date, time) and detail location of the incidents(latitude, longitude).
+
+```python
+crime_df = pd.read_csv('Police_Department_Incident_Reports__Historical_2003_to_May_2018.csv')
+```
+
+```python
+crime_df.columns.values
+```
+
+
+
+
+    array(['IncidntNum', 'Category', 'Descript', 'DayOfWeek', 'Date', 'Time',
+           'PdDistrict', 'Resolution', 'Address', 'X', 'Y', 'Location', 'PdId',
+           'SF Find Neighborhoods', 'Current Police Districts',
+           'Current Supervisor Districts', 'Analysis Neighborhoods',
+           ':@computed_region_yftq_j783', ':@computed_region_p5aj_wyqh',
+           ':@computed_region_rxqg_mtj9', ':@computed_region_bh8s_q3mv',
+           ':@computed_region_fyvs_ahh9', ':@computed_region_9dfj_4gjx',
+           ':@computed_region_n4xg_c4py', ':@computed_region_4isq_27mq',
+           ':@computed_region_fcz8_est8', ':@computed_region_pigm_ib2e',
+           ':@computed_region_9jxd_iqea', ':@computed_region_6pnf_4xz7',
+           ':@computed_region_6ezc_tdp2', ':@computed_region_h4ep_8xdi',
+           ':@computed_region_nqbw_i6c3', ':@computed_region_2dwj_jsy4'], dtype=object)
+
+```python
+crime_df.shape
+```
+
+
+
+
+    (2215024, 33)
+
+There are 33 features in this dataset with about 2 million data rows.
+There is no description on the original dataset about the feature ranging from
+'SF Find Neighborhoods' to ':@computed_region_2dwj_jsy4'. So I will omit those features and focus on following featuers:
+
+'IncidntNum': Unique key value on each incident.
+
+'Category':VEHICLE THEFT,NON-CRIMINAL etc.
+
+'Descript':STOLEN MOTORCYCLE,PAROLE VIOLATION etc
+
+'DayOfWeek':'Monday', 'Tuesday'...
+
+'Date':DD/MM/YYYY
+
+'Time':HH:mm
+
+'PdDistrict':SOUTHERN,MISSION etc
+
+'Resolution':ARREST,BOOKED etc
+
+'Address':Street name of crime such as Block of TEHAMA ST
+
+'X':Longitude
+
+'Y':Latitude
+
+'Location':Concat of X and Y
+
+'PdId':Unique Identifier for use in update and insert operations
+
+Category fields have following instances.
+There looks skew in specific classes so this is not closely balanced.
+
+```python
+crime_df['Category'].unique()
+```
+```
+array(['VEHICLE THEFT', 'NON-CRIMINAL', 'OTHER OFFENSES', 'ROBBERY','DRUG/NARCOTIC', 'LIQUOR LAWS', 'WARRANTS', 'PROSTITUTION','ASSAULT', 'LARCENY/THEFT', 'VANDALISM', 'STOLEN PROPERTY','KIDNAPPING', 'BURGLARY', 'SECONDARY CODES', 'DRUNKENNESS','SUSPICIOUS OCC', 'DRIVING UNDER THE INFLUENCE', 'WEAPON LAWS','FRAUD', 'TRESPASS', 'FAMILY OFFENSES', 'MISSING PERSON','SEX OFFENSES, FORCIBLE', 'RUNAWAY', 'DISORDERLY CONDUCT',
+'FORGERY/COUNTERFEITING', 'GAMBLING', 'BRIBERY', 'EXTORTION',
+'ARSON', 'EMBEZZLEMENT', 'PORNOGRAPHY/OBSCENE MAT', 'SUICIDE',
+'SEX OFFENSES, NON FORCIBLE', 'BAD CHECKS', 'LOITERING',
+'RECOVERED VEHICLE', 'TREA'], dtype=object)
+```
+
+```python
+crime_df['Category'].value_counts()
+```
+
+```
+LARCENY/THEFT                  480448
+OTHER OFFENSES                 309358
+NON-CRIMINAL                   238323
+ASSAULT                        194694
+VEHICLE THEFT                  126602
+DRUG/NARCOTIC                  119628
+VANDALISM                      116059
+WARRANTS                       101379
+BURGLARY                        91543
+SUSPICIOUS OCC                  80444
+MISSING PERSON                  64961
+ROBBERY                         55867
+FRAUD                           41542
+SECONDARY CODES                 25831
+FORGERY/COUNTERFEITING          23050
+WEAPON LAWS                     22234
+TRESPASS                        19449
+PROSTITUTION                    16701
+STOLEN PROPERTY                 11891
+SEX OFFENSES, FORCIBLE          11742
+DISORDERLY CONDUCT              10040
+DRUNKENNESS                      9826
+RECOVERED VEHICLE                8716
+DRIVING UNDER THE INFLUENCE      5672
+KIDNAPPING                       5346
+RUNAWAY                          4440
+LIQUOR LAWS                      4083
+ARSON                            3931
+EMBEZZLEMENT                     2988
+LOITERING                        2430
+SUICIDE                          1292
+FAMILY OFFENSES                  1183
+BAD CHECKS                        925
+BRIBERY                           813
+EXTORTION                         741
+SEX OFFENSES, NON FORCIBLE        431
+GAMBLING                          348
+PORNOGRAPHY/OBSCENE MAT            59
+TREA                               14
+```
+
 
 ### Exploratory Visualization
+- Location
+Let's visualize the occurence of the crime by the location.
+
+```python
+rounding_factor = 4
+
+# Create heatmap
+from matplotlib.colors import LogNorm
+x = np.round(crime_df['X'].head(10000),rounding_factor)
+y = np.round(crime_df['Y'].head(10000),rounding_factor)
+fig = plt.figure()
+plt.suptitle('Reported Crime Heatmap')
+plt.xlabel('Latitude')
+plt.ylabel('Longitude')
+H, xedges, yedges, img = plt.hist2d(x, y, norm=LogNorm())
+extent = [yedges[0], yedges[-1], xedges[0], xedges[-1]]
+
+plt.show()
+```
+
+![](C:\Users\keadachi\Downloads\locationheatmap.png)
+
+
 In this section, you will need to provide some form of visualization that summarizes or extracts a relevant characteristic or feature about the data. The visualization should adequately support the data being used. Discuss why this visualization was chosen and how it is relevant. Questions to ask yourself when writing this section:
 - _Have you visualized a relevant characteristic or feature about the dataset or input data?_
 - _Is the visualization thoroughly analyzed and discussed?_
