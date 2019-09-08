@@ -442,8 +442,9 @@ I would not say this is satisfactionary.
 
 There is a discussion in kaggle competeition to create features based on longitude and latitude.
 https://www.kaggle.com/c/sf-crime/discussion/18853#latest-413648
-
 But I'm not quite sure what this means actually and hesitated to adopt the idea.
+
+
 -----------
 
 
