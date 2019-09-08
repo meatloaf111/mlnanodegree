@@ -370,59 +370,80 @@ log_loss(testlabel,predicted)
 Log loss of XGB is only 5% better than benchmark.
 
 ### Refinement
-In this section, you will need to discuss the process of improvement you made upon the algorithms and techniques you used in your implementation. For example, adjusting parameters for certain models to acquire improved solutions would fall under the refinement category. Your initial and final solutions should be reported, as well as any significant intermediate results as necessary. Questions to ask yourself when writing this section:
-- _Has an initial solution been found and clearly reported?_
-- _Is the process of improvement clearly documented, such as what techniques were used?_
-- _Are intermediate and final solutions clearly reported as the process is improved?_
+I tried to search better set of hyperparameters using GridSearchCV.
+For example, I tried different sets of parameters like following:
+```python
+params={'max_depth': [1,2,3,4,5],
+        'subsample': [0.5,0.95,1],
+        'colsample_bytree': [0.5,1]
+}
+```
+
+```python
+gs = GridSearchCV(xgb_model,
+                  params,
+                  cv=10,
+                  scoring={'neg_log_loss': make_scorer(log_loss, labels=[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14
+                                                                        ,15,16,17,18,19,20,21,22,23,24
+                                                                        ,25,26,27,28,29,30,31,32,33,34,35,36
+                                                                        ,37,38], greater_is_better=False),'accuracy': 'accuracy'},
+                  n_jobs=1,
+                  refit='neg_log_loss')
+```
+
+After doing several time of search, I optimized parameters and final model was following:
+```python
+xgb_model = XGBClassifier(n_estimators = 20,
+                      learning_rate = 0.2,
+                      max_depth = 11,
+                      min_child_weight=4,
+                      gamma = 0.4,
+                      reg_alpha = 0.05,
+                      reg_lambda = 2,
+                      subsample = 1.0,
+                      colsample_bytree = 1.0,
+                      max_delta_step = 1,
+                      scale_pos_weight = 1,
+                      objective = 'multi:softprob',
+                      nthread = 8,
+                      seed = 0#,
+)
+```
+
+```python
+xgb_model.fit(training,label)
+```
+
+```python
+XGBClassifier(base_score=0.5, booster='gbtree', colsample_bylevel=1,
+       colsample_bynode=1, colsample_bytree=1.0, gamma=0.4,
+       learning_rate=0.2, max_delta_step=1, max_depth=11,
+       min_child_weight=4, missing=None, n_estimators=20, n_jobs=1,
+       nthread=8, objective='multi:softprob', random_state=0,
+       reg_alpha=0.05, reg_lambda=2, scale_pos_weight=1, seed=0,
+       silent=None, subsample=1.0, verbosity=1)
+```
+```python
+predicted = xgb_model.predict_proba(testing)
+log_loss(testlabel,predicted)
+```
+```python
+2.30431368631554
+```
+This improves the metrics by 1.8%.
 
 
 ## IV. Results
 _(approx. 2-3 pages)_
 
 ### Model Evaluation and Validation
-In this section, the final model and any supporting qualities should be evaluated in detail. It should be clear how the final model was derived and why this model was chosen. In addition, some type of analysis should be used to validate the robustness of this model and its solution, such as manipulating the input data or environment to see how the model’s solution is affected (this is called sensitivity analysis). Questions to ask yourself when writing this section:
-- _Is the final model reasonable and aligning with solution expectations? Are the final parameters of the model appropriate?_
-- _Has the final model been tested with various inputs to evaluate whether the model generalizes well to unseen data?_
-- _Is the model robust enough for the problem? Do small perturbations (changes) in training data or the input space greatly affect the results?_
-- _Can results found from the model be trusted?_
+Final model above is only 7% better than the bench mark.
+I would not say this is satisfactionary.
 
-### Justification
-In this section, your model’s final solution and its results should be compared to the benchmark you established earlier in the project using some type of statistical analysis. You should also justify whether these results and the solution are significant enough to have solved the problem posed in the project. Questions to ask yourself when writing this section:
-- _Are the final results found stronger than the benchmark result reported earlier?_
-- _Have you thoroughly analyzed and discussed the final solution?_
-- _Is the final solution significant enough to have solved the problem?_
+There is a discussion in kaggle competeition to create features based on longitude and latitude.
+https://www.kaggle.com/c/sf-crime/discussion/18853#latest-413648
 
-
-## V. Conclusion
-_(approx. 1-2 pages)_
-
-### Free-Form Visualization
-In this section, you will need to provide some form of visualization that emphasizes an important quality about the project. It is much more free-form, but should reasonably support a significant result or characteristic about the problem that you want to discuss. Questions to ask yourself when writing this section:
-- _Have you visualized a relevant or important quality about the problem, dataset, input data, or results?_
-- _Is the visualization thoroughly analyzed and discussed?_
-- _If a plot is provided, are the axes, title, and datum clearly defined?_
-
-### Reflection
-In this section, you will summarize the entire end-to-end problem solution and discuss one or two particular aspects of the project you found interesting or difficult. You are expected to reflect on the project as a whole to show that you have a firm understanding of the entire process employed in your work. Questions to ask yourself when writing this section:
-- _Have you thoroughly summarized the entire process you used for this project?_
-- _Were there any interesting aspects of the project?_
-- _Were there any difficult aspects of the project?_
-- _Does the final model and solution fit your expectations for the problem, and should it be used in a general setting to solve these types of problems?_
-
-### Improvement
-In this section, you will need to provide discussion as to how one aspect of the implementation you designed could be improved. As an example, consider ways your implementation can be made more general, and what would need to be modified. You do not need to make this improvement, but the potential solutions resulting from these changes are considered and compared/contrasted to your current solution. Questions to ask yourself when writing this section:
-- _Are there further improvements that could be made on the algorithms or techniques you used in this project?_
-- _Were there algorithms or techniques you researched that you did not know how to implement, but would consider using if you knew how?_
-- _If you used your final solution as the new benchmark, do you think an even better solution exists?_
-
+But I'm not quite sure what this means actually and hesitated to adopt the idea.
 -----------
 
-**Before submitting, ask yourself. . .**
 
-- Does the project report you’ve written follow a well-organized structure similar to that of the project template?
-- Is each section (particularly **Analysis** and **Methodology**) written in a clear, concise and specific fashion? Are there any ambiguous terms or phrases that need clarification?
-- Would the intended audience of your project be able to understand your analysis, methods, and results?
-- Have you properly proof-read your project report to assure there are minimal grammatical and spelling mistakes?
-- Are all the resources used for this project correctly cited and referenced?
-- Is the code that implements your solution easily readable and properly commented?
-- Does the code execute without error and produce results similar to those reported?
