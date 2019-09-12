@@ -305,18 +305,19 @@ Based on sklearn algorithm cheat-sheet, I'm going to use classification methods 
 
 https://scikit-learn.org/stable/tutorial/machine_learning_map/
 
-I'm going to use ensemble model leveraging XGBoost or LightGBM.
+I'm going to use ensemble model leveraging XGBoost.
 
 ### Benchmark
 I will use very simple model such as logistic regression as a benchmark model.
 
 ## III. Methodology
-_(approx. 3-5 pages)_
+
+Based on the result of EDA above, I will use DayOfWeek, Time, Location(Longitute,Latitude) as predicators.
 
 ### Data Preprocessing
 - Year
 There are over 2 million records in a dataset.
-This is  too many for my machine does not enough power to learn all those datasets.
+This is too many for my machine does not enough power to learn all those datasets.
 My interest is on the scenary of the place of the crime.
 Landscape changes with the time passes due to redevelopment etc.
 So I will focus on the latest data and use the data from 2015 to 2018.
@@ -401,7 +402,7 @@ lrpredicted = lr.predict_proba(testing)
 log_loss(testlabel,lrpredicted)
 ```
 ```python
-2.4747829464660747
+2.4779045272356286
 ```
 Next , I build initial model with XGBClassifier.
 ```python
@@ -497,7 +498,7 @@ predicted = xgb_model.predict_proba(testing)
 log_loss(testlabel,predicted)
 ```
 ```python
-2.3424092221527433
+2.3498548077681436
 ```
 
 The metrics of log_loss only improves the by 0.1% from initial model.
@@ -505,15 +506,44 @@ So it's not a great improvement.
 
 ### Justification
 
+Using XGBoost model, I built the prediction model.
+To clarify the performance of this model, I visualized how the training is conducted in Fig5.
 
-#### V. Conclusion
 
-Final model above is only 5% better than the bench mark.
-I would not say this is satisfactionary.
+## V. Conclusion
+
+### Free-Form Visualization
+As stated above, final model performance can be assessed by the log loss value.
+Final model above is only 5% better than the bench mark which was not satisfactionally.
+
+Fig5 shows how the training went.
+As the number of training improves, log loss value is declined, which shows that it successfully is trained and validated for test datasets as well.
+
+![alt Fig5.](https://github.com/meatloaf111/mlnanodegree/blob/master/xgboostlogloss.png)
+
+Fig6 shows the importance of each feature in this model.
+Time,Locations has much more importance than dayofweek.
+
+![alt Fig6.](https://github.com/meatloaf111/mlnanodegree/blob/master/featureimportance.png)
+
+### Reflection
+
+The difficult part of this project was hyperparameter tuning.
+I decided to use GridSearchCV.
+The challenge was the time it took to optimize the parameters.
+It took approximately 15min to 20min for each fits.
+So I could not devote much time to conduct many attempts thus got a very limited result of the tuning.
+
+I should have spent more time on changing parameters of GridSearchCV to reduce the time of tuning.
+
+### Improvement
+
 
 There is a discussion in kaggle competeition to create features based on longitude and latitude.
 https://www.kaggle.com/c/sf-crime/discussion/18853#latest-413648
-But I'm not quite sure what this means actually and hesitated to adopt the idea.
+I'm not quite sure what this means actually and hesitated to adopt the idea in the timeframce of this project.
+
+But I want to look into above thread and do more research as well as do more parameter tuning to improve the model performance.
 
 
 -----------
