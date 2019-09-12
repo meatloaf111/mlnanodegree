@@ -208,6 +208,7 @@ plt.show()
 Fig1 shows the heatmap. I can see that there are certain locations that no crimes occur.
 
 Fig1
+
 ![alt Fig1.](https://github.com/meatloaf111/mlnanodegree/blob/master/locationheatmap.png)
 
 - Occurence by Year
@@ -218,7 +219,9 @@ sns.countplot(x='Year',data=crime_df)
 
 Fig2 shows the case number by Year. There are less cases in 2018 compared to another year.
 I assume this is because the dataset is still under updated when I get this one.
+
 Fig2
+
 ![alt Fig2.](https://github.com/meatloaf111/mlnanodegree/blob/master/incidentsperyear.png)
 
 
@@ -229,13 +232,17 @@ plt.title('Number of cases by dayofweek')
 ```
 
 Fig3 shows the case number by day of work.It looks like much more cases are recorded on Weekend.
+
 Fig3
+
 ![alt Fig3.](https://github.com/meatloaf111/mlnanodegree/blob/master/perdayofweek.png)
 
 - Occurence by Hour
 
 Fig4 shows the case number by hour. It shows the incident happens more on daytime thourgh midnight.
+
 Fig4
+
 ![alt Fig4.](https://github.com/meatloaf111/mlnanodegree/blob/master/ncasesbyhour.png)
 
 - Category
@@ -523,13 +530,16 @@ Final model above is only 5% better than the bench mark which was not satisfacti
 Fig5 shows how the training went.
 As the number of training improves, log loss value is declined, which shows that it successfully is trained and validated for test datasets as well.
 
+
 Fig5
+
 ![alt Fig5.](https://github.com/meatloaf111/mlnanodegree/blob/master/xgboostlogloss.png)
 
 Fig6 shows the importance of each feature in this model.
 Time,Locations has much more importance than dayofweek.
 
 Fig6
+
 ![alt Fig6.](https://github.com/meatloaf111/mlnanodegree/blob/master/featureimportance.png)
 
 ### Reflection
