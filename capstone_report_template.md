@@ -1,7 +1,7 @@
 # Machine Learning Engineer Nanodegree
 ## Capstone Project
 Ken Adachi  
-September xxst, 2019
+September 12th, 2019
 
 ## I. Definition
 
@@ -30,6 +30,12 @@ So I want to analyze the histrocial crime incident data with the information on 
 
 This might lead to prevent crime to happen in my neighborhood and proctec children in my community.
 
+I'm going to use "Police Department Incident Reports: Historical 2003 to May 2018" data set provided by San Francisco City Government.
+
+https://data.sfgov.org/Public-Safety/Police-Department-Incident-Reports-Historical-2003/tmnf-yvry
+
+This dataset includes police incident reports filed by officers and by individuals through self-service online reporting for non-emergency cases through 2003 to 2018.The dataset has attributes such as when the incident reports filed (Date, time) and detail location of the incidents(latitude, longitude).
+
 ### Problem Statement
 In order to avoid to be involved in encountering crime, I want to develop a solution to predict if the crime occur in the present location. There are several points to consider:
 
@@ -56,20 +62,18 @@ For example, crime targeted for the children will occur more when children got h
 In sum, I want to make the solution to accept the location and time and then predict if the crime will occur or not.
 
 ### Metrics
-In this section, you will need to clearly define the metrics or calculations you will use to measure performance of a model or result in your project. These calculations and metrics should be justified based on the characteristics of the problem and problem domain. Questions to ask yourself when writing this section:
-- _Are the metrics you’ve chosen to measure the performance of your models clearly discussed and defined?_
-- _Have you provided reasonable justification for the metrics chosen based on the problem and solution?_
+This is a classification problem.
+However, after conducting data exploration, I realised that the label dataset is not closely balanced.
+That's wahy I would not use F measures as metrics and instead I'm going to use log loss.
+Please see the detail on Section II. Analysis.
 
 
 ## II. Analysis
-_(approx. 2-4 pages)_
 
 ### Data Exploration
-I'm going to use "Police Department Incident Reports: Historical 2003 to May 2018" data set provided by San Francisco City Government.
-
-https://data.sfgov.org/Public-Safety/Police-Department-Incident-Reports-Historical-2003/tmnf-yvry
-
-This dataset includes police incident reports filed by officers and by individuals through self-service online reporting for non-emergency cases through 2003 to 2018.The dataset has attributes such as when the incident reports filed (Date, time) and detail location of the incidents(latitude, longitude).
+There are 33 features in this dataset with about 2 million data rows.
+There is no description on the original dataset about the feature ranging from
+'SF Find Neighborhoods' to ':@computed_region_2dwj_jsy4'. So I will omit those features and focus on following featuers:
 
 ```python
 crime_df = pd.read_csv('Police_Department_Incident_Reports__Historical_2003_to_May_2018.csv')
@@ -134,7 +138,53 @@ There is no description on the original dataset about the feature ranging from
 
 'PdId':Unique Identifier for use in update and insert operations
 
+Category data is not well balanced.
 
+```python
+crime_df['Category'].value_counts()
+```
+
+```
+LARCENY/THEFT                  480448
+OTHER OFFENSES                 309358
+NON-CRIMINAL                   238323
+ASSAULT                        194694
+VEHICLE THEFT                  126602
+DRUG/NARCOTIC                  119628
+VANDALISM                      116059
+WARRANTS                       101379
+BURGLARY                        91543
+SUSPICIOUS OCC                  80444
+MISSING PERSON                  64961
+ROBBERY                         55867
+FRAUD                           41542
+SECONDARY CODES                 25831
+FORGERY/COUNTERFEITING          23050
+WEAPON LAWS                     22234
+TRESPASS                        19449
+PROSTITUTION                    16701
+STOLEN PROPERTY                 11891
+SEX OFFENSES, FORCIBLE          11742
+DISORDERLY CONDUCT              10040
+DRUNKENNESS                      9826
+RECOVERED VEHICLE                8716
+DRIVING UNDER THE INFLUENCE      5672
+KIDNAPPING                       5346
+RUNAWAY                          4440
+LIQUOR LAWS                      4083
+ARSON                            3931
+EMBEZZLEMENT                     2988
+LOITERING                        2430
+SUICIDE                          1292
+FAMILY OFFENSES                  1183
+BAD CHECKS                        925
+BRIBERY                           813
+EXTORTION                         741
+SEX OFFENSES, NON FORCIBLE        431
+GAMBLING                          348
+PORNOGRAPHY/OBSCENE MAT            59
+TREA                               14
+```
 
 ### Exploratory Visualization
 - Location
@@ -155,8 +205,9 @@ extent = [yedges[0], yedges[-1], xedges[0], xedges[-1]]
 
 plt.show()
 ```
+Fig1 shows the heatmap. I can see that there are certain locations that no crimes occur.
 
-![](https://github.com/meatloaf111/mlnanodegree/blob/master/locationheatmap.png)
+![alt Fig1.](https://github.com/meatloaf111/mlnanodegree/blob/master/locationheatmap.png)
 
 - Occurence by Year
 ```python
@@ -164,7 +215,9 @@ crime_df['Year'] = [int(dte.split("/")[2]) for dte in crime_df['Date']]
 sns.countplot(x='Year',data=crime_df)
 ```
 
-![](https://github.com/meatloaf111/mlnanodegree/blob/master/incidentsperyear.png)
+Fig2 shows the case number by Year. There are less cases in 2018 compared to another year.
+I assume this is because the dataset is still under updated when I get this one.
+![alt Fig2.](https://github.com/meatloaf111/mlnanodegree/blob/master/incidentsperyear.png)
 
 
 - Occurence by dayofweek
@@ -172,7 +225,14 @@ sns.countplot(x='Year',data=crime_df)
 sns.countplot(x='DayOfWeek',data=crime_df)
 plt.title('Number of cases by dayofweek')
 ```
-![](https://github.com/meatloaf111/mlnanodegree/blob/master/perdayofweek.png)
+
+Fig3 shows the case number by day of work.It looks like much more cases are recorded on Weekend.
+![alt Fig3.](https://github.com/meatloaf111/mlnanodegree/blob/master/perdayofweek.png)
+
+- Occurence by Hour
+
+Fig4 shows the case number by hour. It shows the incident happens more on daytime thourgh midnight.
+![alt Fig4.](https://github.com/meatloaf111/mlnanodegree/blob/master/ncasesbyhour.png)
 
 - Category
 Category fields have following instances.
@@ -255,20 +315,20 @@ _(approx. 3-5 pages)_
 
 ### Data Preprocessing
 - Year
-Since we do not have enough data on year 2018, I will ommit this year.
-Also , there are too many data from 2003 to 2017 and my machine does not enough power to learn all those datasets.
+There are over 2 million records in a dataset.
+This is  too many for my machine does not enough power to learn all those datasets.
 My interest is on the scenary of the place of the crime.
 Landscape changes with the time passes due to redevelopment etc.
-So I will focus on the lates data and use the data from 2015 to 2017.
+So I will focus on the latest data and use the data from 2015 to 2018.
 
 ```python
 crime_2015_2018 = crime_df[crime_df.Year > 2014]
-crime_2015_2017 = crime_2015_2018[crime_df.Year < 2018]
-crime_2015_2017.shape
+crime_2015_2018 = crime_2015_2018[crime_df.Year < 2019]
+crime_2015_2018.shape
 ```
 
 ```python
-(462182, 34)
+(508850, 34)
 ```
 
 - Location
@@ -373,42 +433,51 @@ Log loss of XGB is only 5% better than benchmark.
 I tried to search better set of hyperparameters using GridSearchCV.
 For example, I tried different sets of parameters like following:
 ```python
-params={'max_depth': [1,2,3,4,5],
-        'subsample': [0.5,0.95,1],
-        'colsample_bytree': [0.5,1]
+params={
+       'max_depth':[4,10,13],
+       'min_child_weight':list(range(1,3,1)),
+       'gamma':[0.5,1,2]
 }
 ```
 
 ```python
-gs = GridSearchCV(xgb_model,
-                  params,
-                  cv=10,
-                  scoring={'neg_log_loss': make_scorer(log_loss, labels=[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14
-                                                                        ,15,16,17,18,19,20,21,22,23,24
-                                                                        ,25,26,27,28,29,30,31,32,33,34,35,36
-                                                                        ,37,38], greater_is_better=False),'accuracy': 'accuracy'},
+grid_search = GridSearchCV(xgb_model,
+                            param_grid = param_distNn,
+                            neg_log_loss': make_scorer(log_loss, labels=crime_classes, greater_is_better=False,needs_proba=True)},
                   n_jobs=1,
-                  refit='neg_log_loss')
+                  refit='neg_log_loss',
+                            verbose=10)
 ```
 
 After doing several time of search, I optimized parameters and final model was following:
 ```python
-xgb_model = XGBClassifier(n_estimators = 20,
-                      learning_rate = 0.2,
-                      max_depth = 11,
-                      min_child_weight=4,
-                      gamma = 0.4,
-                      reg_alpha = 0.05,
-                      reg_lambda = 2,
-                      subsample = 1.0,
-                      colsample_bytree = 1.0,
-                      max_delta_step = 1,
-                      scale_pos_weight = 1,
-                      objective = 'multi:softprob',
-                      nthread = 8,
-                      seed = 0#,
+xgb_model = XGBClassifier(
+                     max_depth = 3,
+
+                     min_child_weight=1,
+
+                     gamma = 1,
 )
 ```
+
+## IV. Results
+
+### Model Evaluation and Validation
+The final model is chosen after conducting parameter tuning.
+Following is a final XGBoost classifier definition.
+
+```python
+XGBClassifier(base_score=0.5, booster='gbtree', colsample_bylevel=1,
+       colsample_bynode=1, colsample_bytree=1, gamma=0, learning_rate=0.1,
+       max_delta_step=0, max_depth=3, min_child_weight=1, missing=None,
+       n_estimators=100, n_jobs=1, nthread=None,
+       objective='multi:softprob', random_state=0, reg_alpha=0,
+       reg_lambda=1, scale_pos_weight=1, seed=None, silent=None,
+       subsample=1, verbosity=1)
+```
+
+To verify this model, validation test was conducted by spliting the datasets into test datasets.
+
 
 ```python
 xgb_model.fit(training,label)
@@ -416,28 +485,30 @@ xgb_model.fit(training,label)
 
 ```python
 XGBClassifier(base_score=0.5, booster='gbtree', colsample_bylevel=1,
-       colsample_bynode=1, colsample_bytree=1.0, gamma=0.4,
-       learning_rate=0.2, max_delta_step=1, max_depth=11,
-       min_child_weight=4, missing=None, n_estimators=20, n_jobs=1,
-       nthread=8, objective='multi:softprob', random_state=0,
-       reg_alpha=0.05, reg_lambda=2, scale_pos_weight=1, seed=0,
-       silent=None, subsample=1.0, verbosity=1)
+       colsample_bynode=1, colsample_bytree=1, gamma=0, learning_rate=0.1,
+       max_delta_step=0, max_depth=3, min_child_weight=1, missing=None,
+       n_estimators=100, n_jobs=1, nthread=None,
+       objective='multi:softprob', random_state=0, reg_alpha=0,
+       reg_lambda=1, scale_pos_weight=1, seed=None, silent=None,
+       subsample=1, verbosity=1)
 ```
 ```python
 predicted = xgb_model.predict_proba(testing)
 log_loss(testlabel,predicted)
 ```
 ```python
-2.30431368631554
+2.3424092221527433
 ```
-This improves the metrics by 1.8%.
+
+The metrics of log_loss only improves the by 0.1% from initial model.
+So it's not a great improvement.
+
+### Justification
 
 
-## IV. Results
-_(approx. 2-3 pages)_
+#### V. Conclusion
 
-### Model Evaluation and Validation
-Final model above is only 7% better than the bench mark.
+Final model above is only 5% better than the bench mark.
 I would not say this is satisfactionary.
 
 There is a discussion in kaggle competeition to create features based on longitude and latitude.
