@@ -245,66 +245,7 @@ Fig4
 
 ![alt Fig4.](https://github.com/meatloaf111/mlnanodegree/blob/master/ncasesbyhour.png)
 
-- Category
-Category fields have following instances.
-There looks skew in specific classes so this is not closely balanced.
 
-```python
-crime_df['Category'].unique()
-```
-```
-array(['VEHICLE THEFT', 'NON-CRIMINAL', 'OTHER OFFENSES', 'ROBBERY','DRUG/NARCOTIC', 'LIQUOR LAWS', 'WARRANTS', 'PROSTITUTION','ASSAULT', 'LARCENY/THEFT', 'VANDALISM', 'STOLEN PROPERTY','KIDNAPPING', 'BURGLARY', 'SECONDARY CODES', 'DRUNKENNESS','SUSPICIOUS OCC', 'DRIVING UNDER THE INFLUENCE', 'WEAPON LAWS','FRAUD', 'TRESPASS', 'FAMILY OFFENSES', 'MISSING PERSON','SEX OFFENSES, FORCIBLE', 'RUNAWAY', 'DISORDERLY CONDUCT',
-'FORGERY/COUNTERFEITING', 'GAMBLING', 'BRIBERY', 'EXTORTION',
-'ARSON', 'EMBEZZLEMENT', 'PORNOGRAPHY/OBSCENE MAT', 'SUICIDE',
-'SEX OFFENSES, NON FORCIBLE', 'BAD CHECKS', 'LOITERING',
-'RECOVERED VEHICLE', 'TREA'], dtype=object)
-```
-
-```python
-crime_df['Category'].value_counts()
-```
-
-```
-LARCENY/THEFT                  480448
-OTHER OFFENSES                 309358
-NON-CRIMINAL                   238323
-ASSAULT                        194694
-VEHICLE THEFT                  126602
-DRUG/NARCOTIC                  119628
-VANDALISM                      116059
-WARRANTS                       101379
-BURGLARY                        91543
-SUSPICIOUS OCC                  80444
-MISSING PERSON                  64961
-ROBBERY                         55867
-FRAUD                           41542
-SECONDARY CODES                 25831
-FORGERY/COUNTERFEITING          23050
-WEAPON LAWS                     22234
-TRESPASS                        19449
-PROSTITUTION                    16701
-STOLEN PROPERTY                 11891
-SEX OFFENSES, FORCIBLE          11742
-DISORDERLY CONDUCT              10040
-DRUNKENNESS                      9826
-RECOVERED VEHICLE                8716
-DRIVING UNDER THE INFLUENCE      5672
-KIDNAPPING                       5346
-RUNAWAY                          4440
-LIQUOR LAWS                      4083
-ARSON                            3931
-EMBEZZLEMENT                     2988
-LOITERING                        2430
-SUICIDE                          1292
-FAMILY OFFENSES                  1183
-BAD CHECKS                        925
-BRIBERY                           813
-EXTORTION                         741
-SEX OFFENSES, NON FORCIBLE        431
-GAMBLING                          348
-PORNOGRAPHY/OBSCENE MAT            59
-TREA                               14
-```
 
 ### Algorithms and Techniques
 
