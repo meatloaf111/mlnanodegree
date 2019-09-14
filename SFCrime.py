@@ -9,7 +9,7 @@ import pandas as pd
 import datetime 
 import matplotlib.pyplot as plt
 from sklearn import preprocessing
-#from sklearn import cross_validation
+from sklearn import cross_validation
 from sklearn.model_selection import train_test_split
 import xgboost 
 from xgboost import XGBClassifier
@@ -22,7 +22,7 @@ from sklearn.metrics import accuracy_score, log_loss, make_scorer
 from sklearn.metrics import classification_report
 
 
-# In[54]:
+# In[2]:
 
 
 crime_df = pd.read_csv('Police_Department_Incident_Reports__Historical_2003_to_May_2018.csv')
@@ -32,6 +32,18 @@ crime_df = pd.read_csv('Police_Department_Incident_Reports__Historical_2003_to_M
 
 
 crime_df.columns.values
+
+
+# In[7]:
+
+
+crime_df.info()
+
+
+# In[11]:
+
+
+type(crime_df['Time'])
 
 
 # In[4]:
@@ -54,10 +66,16 @@ crime_df.head(3)
 print(crime_df['Category'])
 
 
-# In[55]:
+# In[9]:
 
 
 crime_df['Year'] = [int(dte.split("/")[2]) for dte in crime_df['Date']]
+
+
+# In[15]:
+
+
+crime_df['Hour'] = pd.to_datetime(crime_df['Time']).dt.hour
 
 
 # # EDA
@@ -110,9 +128,17 @@ sns.countplot(x='DayOfWeek',data=crime_df)
 plt.title('Number of cases by dayofweek')
 
 
+# In[16]:
+
+
+plt.figure(figsize=(20,10))
+sns.countplot(x='Hour',data=crime_df)
+plt.title('Number of cases by hour')
+
+
 # # Data preprocess
 
-# In[56]:
+# In[3]:
 
 
 xy_scaler = preprocessing.StandardScaler() 
@@ -122,7 +148,7 @@ xy_scaler.fit(crime_df[["X","Y"]])
 crime_df[["X","Y"]]=xy_scaler.transform(crime_df[["X","Y"]]) 
 
 
-# In[57]:
+# In[4]:
 
 
 le_crime = preprocessing.LabelEncoder()
@@ -130,14 +156,14 @@ crime = le_crime.fit_transform(crime_df.Category)
 crime_df['Category'] = crime
 
 
-# In[6]:
+# In[20]:
 
 
 crime_classes = crime_df['Category'].unique()
 crime_classes
 
 
-# In[58]:
+# In[5]:
 
 
 le_dow= preprocessing.LabelEncoder()
@@ -146,14 +172,14 @@ crime_df['DayOfWeek'] = le_dow.fit_transform(crime_df.DayOfWeek)
 crime_df['Time'] = le_time.fit_transform(crime_df.Time)
 
 
-# In[59]:
+# In[10]:
 
 
 crime_2015_2018 = crime_df[crime_df.Year > 2014]
 #crime_2015_2017 = crime_2015_2018[crime_df.Year < 2018]
 
 
-# In[60]:
+# In[9]:
 
 
 crime_2015_2018.shape
@@ -165,10 +191,10 @@ crime_2015_2018.shape
 crime_2015_2018.head()
 
 
-# In[61]:
+# In[11]:
 
 
-training, testing = cross_validation.train_test_split(crime_2015_2018,test_size = 0.33, random_state=7)
+training, testing = train_test_split(crime_2015_2018,test_size = 0.33, random_state=7)
 
 
 # In[12]:
@@ -179,7 +205,7 @@ training.head()
 
 # # Dataset Cleanup
 
-# In[62]:
+# In[12]:
 
 
 #training = training[['Category', 'DayOfWeek', 'Date', 'Time', 'X', 'Y']]
@@ -189,7 +215,7 @@ training.columns = ['Category', 'DayOfWeek',  'Time', 'Longitude', 'Latitude']
 training.head()
 
 
-# In[63]:
+# In[13]:
 
 
 testing = testing[['Category', 'DayOfWeek',  'Time', 'X', 'Y']]
@@ -199,7 +225,7 @@ testing.columns = ['Category', 'DayOfWeek', 'Time', 'Longitude', 'Latitude']
 testing.head()
 
 
-# In[64]:
+# In[14]:
 
 
 label = training['Category'].astype('category')
@@ -213,41 +239,29 @@ del testing['Category']
 
 # # LogisticRegression as benchmark model
 
-# In[ ]:
+# In[21]:
 
 
 lr = LogisticRegression()
 lr.fit(training,label)
 
 
-# In[ ]:
+# In[22]:
 
 
 lrpredicted = lr.predict_proba(testing)
 print(lrpredicted)
 
 
-# In[ ]:
+# In[23]:
 
 
 log_loss(testlabel,lrpredicted)
 
 
-# In[ ]:
-
-
-scaler = preprocessing.StandardScaler().fit(training)
-
-training = pd.DataFrame(scaler.transform(training))
-
-training = scaler.transform(training)
-
-testing = scaler.transform(testing)
-
-
 # # XGB initial model
 
-# In[35]:
+# In[24]:
 
 
 xgb_model = XGBClassifier()
@@ -267,7 +281,7 @@ predicted = xgb_model.predict_proba(testing)
 #print(predicted)
 
 
-# In[38]:
+# In[25]:
 
 
 log_loss(testlabel,predicted)
@@ -297,31 +311,28 @@ print(xgb_model.feature_importances_)
 
 # # Parameter tuning
 
-# In[20]:
+# In[15]:
 
 
 xgb_model = XGBClassifier()
 
 
-# In[21]:
+# In[14]:
 
 
 param_dist1 = {
 
-               'max_depth':list(range(3,5,1)),
-
-               'min_child_weight':list(range(1,3,1))
-
+               'learning_rate':[0.1,0.2,0.3]
 }
 
 
-# In[21]:
+# In[18]:
 
 
 stratShuffleSplit = cross_validation.StratifiedShuffleSplit(label, train_size = 0.5, n_iter = 1)
 
 
-# In[19]:
+# In[22]:
 
 
 grid_search = GridSearchCV(xgb_model,
@@ -331,37 +342,37 @@ grid_search = GridSearchCV(xgb_model,
                             cv = stratShuffleSplit,
 
                             scoring={'neg_log_loss': make_scorer(log_loss, labels=crime_classes, greater_is_better=False,needs_proba=True)},
-                  n_jobs=1,
+                  n_jobs=-1,
                   refit='neg_log_loss',
 
                             verbose=10)
 
 
-# In[24]:
+# In[23]:
 
 
 grid_search.fit(training, label)
 
 
-# In[26]:
+# In[24]:
 
 
 grid_search.best_params_
 
 
-# In[15]:
+# In[16]:
 
 
 param_dist2 = {
 
-               'max_depth':[4,10,13],
+               'max_depth':[3,10],
 
                'min_child_weight':list(range(1,3,1))
 
 }
 
 
-# In[20]:
+# In[21]:
 
 
 grid_search = GridSearchCV(xgb_model,
@@ -371,16 +382,22 @@ grid_search = GridSearchCV(xgb_model,
                             cv = stratShuffleSplit,
 
                             scoring={'neg_log_loss': make_scorer(log_loss, labels=crime_classes, greater_is_better=False,needs_proba=True)},
-                  n_jobs=1,
+                  n_jobs=-1,
                   refit='neg_log_loss',
 
                             verbose=10)
 
 
-# In[ ]:
+# In[22]:
 
 
 grid_search.fit(training, label)
+
+
+# In[25]:
+
+
+grid_search.best_params_, grid_search.best_score_
 
 
 # In[22]:
@@ -437,39 +454,40 @@ for param_name in sorted(best_parameters.keys()):
 
 # # Final Model
 
-# In[67]:
+# In[26]:
 
 
 xgb_model = XGBClassifier(
-                      max_depth = 3,
+                      learning_rate =  0.3,
+                      max_depth = 10,
 
-                      min_child_weight=1,
+                      min_child_weight=2,
 
                       gamma = 1,
-                      #early_stopping_rounds=10
+                      early_stopping_rounds=90
 )
 
 
-# In[72]:
+# In[27]:
 
 
 eval_set = [(training, label), (testing, testlabel)]
-xgb_model.fit(training,label,eval_metric="mlogloss",eval_set=eval_set,verbose=True)
+xgb_model.fit(training,label,eval_metric="mlogloss",eval_set=eval_set,verbose=False)
 
 
-# In[73]:
+# In[28]:
 
 
 predicted = xgb_model.predict_proba(testing)
 
 
-# In[74]:
+# In[29]:
 
 
 log_loss(testlabel,predicted)
 
 
-# In[75]:
+# In[30]:
 
 
 results = xgb_model.evals_result()
@@ -485,7 +503,7 @@ plt.title('XGBoost Log Loss')
 plt.show()
 
 
-# In[77]:
+# In[31]:
 
 
 print(xgb_model.feature_importances_)

@@ -312,11 +312,43 @@ I want to build prediction model leveraging machine learning techniques.
 
 In this case, I want to apply surpervised learning becuase the labeled data is available.
 
-Based on sklearn algorithm cheat-sheet, I'm going to use classification methods to build the model.
+I chose Ensemble Classifiers techniques Based on sklearn algorithm cheat-sheet.
 
 https://scikit-learn.org/stable/tutorial/machine_learning_map/
 
-I'm going to use ensemble model leveraging XGBoost.
+Here are the justifications:
+- There are more than 2 million samples in this dataset.
+- I'd like to predict the value of crime category , which means I try to predict categorical data.
+- Category field means that what kind of crime occured so this is a labeled data. That makes me be able to use supervised learning techniques.
+
+From the classification methods, I'd like to choose ensemble classifiers.
+
+Ensemble method is a learning algorithm which aggregate the predictions of a group of predictors. Just like a 'widsom of the crowd' , you will often get better predictions than only with the best individual predictor.Since I'd like to have a better prediction, I chose ensemble methods.
+
+From the number of ensemble methods, I chose Gradient Boosting.
+This method works by sequentially adding predictors to an ensemble, each one correcting its predecessor.
+
+I'm going to use XGBoost library which is very popular among data science competition participants such as Kaggle.
+
+There are multiple parameters effecting the results of this technique.
+https://xgboost.readthedocs.io/en/latest/parameter.html
+
+- learning_rate[default=0.3]
+Scales the contribution of each tree. You will need more trees if you set it to a low value, but usually generalize better.
+
+- subsample[default=1]
+Specifies the fraction of training instances to be used for training each tree.Lower values make the algorithm more conservative and prevents overfitting but too small values might lead to under-fitting.
+
+- max_depth[default=6]
+Maximum depth of a tree. Increasing this value will make the model more complex and more likely to overfit.
+
+- min_child_weight[default=1]
+Minimum sum of instance weight (hessian) needed in a child.The larger min_child_weight is, the more conservative the algorithm will be.
+
+- gamma[default=0]
+A node is split only when the resulting split gives a positive reduction in the loss function. Gamma specifies the minimum loss reduction required to make a split.
+
+
 
 ### Benchmark
 I will use very simple model such as logistic regression as a benchmark model.
@@ -370,52 +402,51 @@ crime_df['DayOfWeek'] = le_crime.fit_transform(crime_df.DayOfWeek)
 ```
 
 ### Implementation
-I build the initial model with 'DayOfWeek', 'Time', 'X', 'Y' as predicting features and 'Category' as label.
 
-I split the data into training and testing for cross_validation.
+Following is an implementation process:
 
-```python
-training, testing = cross_validation.train_test_split(crime_2015_2017,test_size = 0.2, random_state=0)
-```
+- Analyze the data
+  Before going into the detail of machine learning, I conducted data analytics or visulization to find when and where the crime occured as stated in the previous section.
 
-```python
-#training = training[['Category', 'DayOfWeek', 'Date', 'Time', 'X', 'Y']]
-training = training[['Category', 'DayOfWeek',  'Time', 'X', 'Y']]
-# Rename X,Y to Longitude, Latitude
-training.columns = ['Category', 'DayOfWeek',  'Time', 'Longitude', 'Latitude']
-```
+- Pre Process
+  Pre process the data as described in the previous section.
 
-```python
-label = training['Category'].astype('category')
+- Setup validation dataset
+  Divide the data set into training data set and test dataset.
 
-testlabel = testing['Category'].astype('category')
+- Dataset Cleanup
+  Define which features to use for prediction and removed the others from dataset.
+  I build the initial model with 'DayOfWeek', 'Time', 'X', 'Y' as predicting features and 'Category' as label.
 
-del training['Category']
+- Train Bench Mark Model
+  Train Logistic Regression model as benchmark model.
 
-del testing['Category']
-```
+- Train Ensemble Model
+  Traing Ensemble model as a initial model.
+  Train the model using training data set and then evaluate it with test dataset.
 
-Firstly build model by logistic regression for benchmarking.
+- Tune
+  Tune hyper parameter to improve the score of the model.
+  I used grid search technique.
 
-```python
-lr = LogisticRegression()
-lr.fit(training,label)
-```
-```python
-LogisticRegression(C=1.0, class_weight=None, dual=False, fit_intercept=True,
-          intercept_scaling=1, max_iter=100, multi_class='ovr', n_jobs=1,
-          penalty='l2', random_state=None, solver='liblinear', tol=0.0001,
-          verbose=0, warm_start=False)
-```
+
+One of the challenges I had during code development is Tuning.
+When I conducted grid search in Python,I encounterd following error and could not proceed.
 
 ```python
-lrpredicted = lr.predict_proba(testing)
-log_loss(testlabel,lrpredicted)
+ValueError: The number of classes in labels is different from that in y_pred. Classes found in labels:
 ```
-```python
-2.4779045272356286
-```
-Next , I build initial model with XGBClassifier.
+
+This was due to the missing value of 'scoring' parameter value.
+Since I chose log_loss as a metric, I chose 'neg_log_loss' as Scoring Classification.
+But I missed to add 'predict_proba' to the prameter.
+https://scikit-learn.org/stable/modules/model_evaluation.html#scoring-parameter
+
+
+### Refinement
+
+The log_loss value of the initial model is 2.3437.
+
 ```python
 xgb_model = XGBClassifier()
 xgb_model.fit(training,label)
@@ -439,14 +470,46 @@ log_loss(testlabel,predicted)
 ```python
 2.3437577077398806
 ```
-Log loss of XGB is only 5% better than benchmark.
 
-### Refinement
 I tried to search better set of hyperparameters using GridSearchCV.
+This is one of the popular technique which try exhaustive searching through manually specified subset of parameters.
+
+I started to fix the learning rate.
+```python
+param_dist1 = {
+
+               'learning_rate':[0.1,0.2,0.3]
+}
+```
+
+```python
+grid_search = GridSearchCV(xgb_model,
+
+                            param_grid = param_dist1,
+
+                            cv = stratShuffleSplit,
+
+                            scoring={'neg_log_loss': make_scorer(log_loss, labels=crime_classes, greater_is_better=False,needs_proba=True)},
+                  n_jobs=-1,
+                  refit='neg_log_loss',
+
+                            verbose=10)
+```
+
+```python
+grid_search.best_params_
+```
+```python
+{'learning_rate': 0.3}
+```
+
+Next, I tuned max_depth and min_child_weight.
+
+
 For example, I tried different sets of parameters like following:
 ```python
 params={
-       'max_depth':[4,10,13],
+       'max_depth':[3,10],
        'min_child_weight':list(range(1,3,1)),
        'gamma':[0.5,1,2]
 }
@@ -461,16 +524,29 @@ grid_search = GridSearchCV(xgb_model,
                             verbose=10)
 ```
 
+```python
+grid_search.best_params_, grid_search.best_score_
+```
+
+```python
+({'max_depth': 10, 'min_child_weight': 2}, -2.2570951727081767)
+```
+
+I also tried tuning 'subsample' and 'gamma'.
+
 After doing several time of search, I optimized parameters and final model was following:
 ```python
 xgb_model = XGBClassifier(
-                     max_depth = 3,
+                      learning_rate =  0.3,
+                      max_depth = 10,
 
-                     min_child_weight=1,
+                      min_child_weight=2,
 
-                     gamma = 1,
+                      gamma = 1,
+                      early_stopping_rounds=90
 )
 ```
+Note that I also added eary_stopping_rounds try to avoid overfitting.
 
 ## IV. Results
 
@@ -480,44 +556,53 @@ Following is a final XGBoost classifier definition.
 
 ```python
 XGBClassifier(base_score=0.5, booster='gbtree', colsample_bylevel=1,
-       colsample_bynode=1, colsample_bytree=1, gamma=0, learning_rate=0.1,
-       max_delta_step=0, max_depth=3, min_child_weight=1, missing=None,
-       n_estimators=100, n_jobs=1, nthread=None,
-       objective='multi:softprob', random_state=0, reg_alpha=0,
-       reg_lambda=1, scale_pos_weight=1, seed=None, silent=None,
-       subsample=1, verbosity=1)
+       colsample_bynode=1, colsample_bytree=1, early_stopping_rounds=90,
+       gamma=1, learning_rate=0.3, max_delta_step=0, max_depth=10,
+       min_child_weight=2, missing=None, n_estimators=100, n_jobs=1,
+       nthread=None, objective='multi:softprob', random_state=0,
+       reg_alpha=0, reg_lambda=1, scale_pos_weight=1, seed=None,
+       silent=None, subsample=1, verbosity=1)
 ```
 
 To verify this model, validation test was conducted by spliting the datasets into test datasets.
 
 
 ```python
-xgb_model.fit(training,label)
-```
-
-```python
-XGBClassifier(base_score=0.5, booster='gbtree', colsample_bylevel=1,
-       colsample_bynode=1, colsample_bytree=1, gamma=0, learning_rate=0.1,
-       max_delta_step=0, max_depth=3, min_child_weight=1, missing=None,
-       n_estimators=100, n_jobs=1, nthread=None,
-       objective='multi:softprob', random_state=0, reg_alpha=0,
-       reg_lambda=1, scale_pos_weight=1, seed=None, silent=None,
-       subsample=1, verbosity=1)
-```
-```python
 predicted = xgb_model.predict_proba(testing)
 log_loss(testlabel,predicted)
 ```
 ```python
-2.3498548077681436
+2.2149192418809505
 ```
 
-The metrics of log_loss only improves the by 0.1% from initial model.
-So it's not a great improvement.
+The metrics of log_loss improved by 5% from initial model.
 
 ### Justification
 
-Using XGBoost model, I built the prediction model.
+To justify the final model , I first compare the results with benchmark.
+
+Log loss value of the logistic regression is 2.4779.
+
+```python
+lr = LogisticRegression()
+lr.fit(training,label)
+```
+```python
+LogisticRegression(C=1.0, class_weight=None, dual=False, fit_intercept=True,
+          intercept_scaling=1, max_iter=100, multi_class='ovr', n_jobs=1,
+          penalty='l2', random_state=None, solver='liblinear', tol=0.0001,
+          verbose=0, warm_start=False)
+```
+
+```python
+lrpredicted = lr.predict_proba(testing)
+log_loss(testlabel,lrpredicted)
+```
+```python
+2.4779045272356286
+```
+
+Using XGBoost model, I built the prediction model.The final model performs better than benchmark by 11%.
 To clarify the performance of this model, I visualized how the training is conducted in Fig5.
 
 
@@ -544,16 +629,29 @@ Fig6
 
 ### Reflection
 
+The process used for this project can be summarized using following steps:
+- Define problem, search and find public dataset
+- Define metrics to evaluate the prediction
+- Download data and pre process
+- Develop benchmark model(logistic regression)
+- Develop initial model(ensemble)
+- Tuning parameters again and again
+
 The difficult part of this project was hyperparameter tuning.
 I decided to use GridSearchCV.
 The challenge was the time it took to optimize the parameters.
-It took approximately 15min to 20min for each fits.
-So I could not devote much time to conduct many attempts thus got a very limited result of the tuning.
+Since I'd like to avoid overfitting , I try to be conservative and want to make much more attempts.
+For example I wanted to try to reduce the value of learning rate and sub_sample.
+But this required me a huge mount of time and I could not afford to have that time.
 
-I should have spent more time on changing parameters of GridSearchCV to reduce the time of tuning.
+One of the challenges of grid search is that the cost of compute is very high like this project.
+There is another option for paramter tuning to leverage Bayesian optimization algorithm.
+
+https://optuna.org/
+
+I want to try this approach in the future.
 
 ### Improvement
-
 
 There is a discussion in kaggle competeition to create features based on longitude and latitude.
 https://www.kaggle.com/c/sf-crime/discussion/18853#latest-413648
